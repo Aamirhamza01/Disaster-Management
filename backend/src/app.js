@@ -28,6 +28,16 @@ const officialWarningRoutes = require('./routes/officialWarnings');
 const aiAlertRoutes = require('./routes/aiAlerts');
 const citizenRoutes = require('./routes/citizens');
 const capFeedRoutes = require('./routes/capFeeds');
+const incidentRoutes = require('./routes/incidents');
+const shelterRoutes = require('./routes/shelters');
+const resourceRoutes = require('./routes/resources');
+const taskRoutes = require('./routes/tasks');
+const impactRoutes = require('./routes/impact');
+const simulationRoutes = require('./routes/simulations');
+const recoveryRoutes = require('./routes/recovery');
+const timelineRoutes = require('./routes/timeline');
+const impactIntelligenceRoutes = require('./routes/impactIntelligence');
+const auditTimelineRoutes = require('./routes/auditTimeline');
 
 const app = express();
 
@@ -99,6 +109,16 @@ app.use('/api/official-warnings', officialWarningRoutes);
 app.use('/api/ai-alerts', aiAlertRoutes);
 app.use('/api/citizens', citizenRoutes);
 app.use('/api/feeds', capFeedRoutes);
+app.use('/api/incidents', incidentRoutes);
+app.use('/api/shelters', shelterRoutes);
+app.use('/api/resources', resourceRoutes);
+app.use('/api/tasks', taskRoutes);
+app.use('/api/impact', impactRoutes);
+app.use('/api/simulations', simulationRoutes);
+app.use('/api/recovery', recoveryRoutes);
+app.use('/api/timeline', timelineRoutes);
+app.use('/api/impact-intelligence', impactIntelligenceRoutes);
+app.use('/api/audit-timeline', auditTimelineRoutes);
 
 // ── 404 handler ───────────────────────────────────────────────────────────────
 app.use((req, res) => {

@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { format } from 'date-fns';
-import { AlertTriangle, PlusCircle, RefreshCw, Zap, ChevronLeft, ChevronRight } from 'lucide-react';
+import { AlertTriangle, PlusCircle, RefreshCw, Zap, ChevronLeft, ChevronRight, Activity } from 'lucide-react';
 import { getEvents, retractEvent, triggerAlert, approveEvent, rejectEvent } from '../api/services';
 import type { DisasterEvent } from '../types';
+import AuditTimeline from '../components/AuditTimeline';
 
 const STATUS_TABS: { label: string; value: string }[] = [
   { label: 'Published / Live',  value: 'active' },
@@ -22,6 +23,7 @@ export default function EventsPage() {
   const [loading,     setLoading]     = useState(true);
   const [actionId,    setActionId]    = useState<string | null>(null);
   const [toastMsg,    setToastMsg]    = useState('');
+  const [expandedTimelineEventId, setExpandedTimelineEventId] = useState<string | null>(null);
 
   // Retract modal
   const [retractModal, setRetractModal] = useState<DisasterEvent | null>(null);
@@ -190,82 +192,111 @@ export default function EventsPage() {
                 </thead>
                 <tbody>
                   {events.map((ev) => (
-                    <tr key={ev._id}>
-                      <td className="events-title-cell">
-                        <div className="events-primary-title">{ev.title}</div>
-                        {ev.type && <div className="events-secondary-type">{ev.type}</div>}
-                        {ev.correctionMessage && (
-                          <div className="events-correction-note">
-                            ↩ {ev.correctionMessage}
+                    <React.Fragment key={ev._id}>
+                      <tr>
+                        <td className="events-title-cell">
+                          <div className="events-primary-title">{ev.title}</div>
+                          {ev.type && <div className="events-secondary-type">{ev.type}</div>}
+                          {ev.correctionMessage && (
+                            <div className="events-correction-note">
+                              ↩ {ev.correctionMessage}
+                            </div>
+                          )}
+                        </td>
+                        <td className="events-type-cell">{ev.type}</td>
+                        <td><span className={`severity-badge ${ev.severity}`}>{ev.severity}</span></td>
+                        <td className="events-zone-cell">
+                          {ev.zoneType === 'radius' ? `${ev.radiusKm} km radius` : ev.zoneType === 'polygon' ? 'Polygon zone' : 'Zone'}
+                        </td>
+                        <td><span className={`status-badge ${ev.status}`}>{ev.status}</span></td>
+                        <td style={{ fontVariantNumeric: 'tabular-nums' }}>
+                          {ev.alertsSentCount.toLocaleString()}
+                        </td>
+                        <td style={{ color: 'var(--grey-500)', fontSize: 12, whiteSpace: 'nowrap' }}>
+                          {format(new Date(ev.createdAt), 'd MMM yy, HH:mm')}
+                        </td>
+                        <td>
+                          <div className="action-row">
+                            <button
+                              className="btn btn-sm btn-ghost"
+                              onClick={() =>
+                                setExpandedTimelineEventId((prev) => (prev === ev._id ? null : ev._id))
+                              }
+                              style={{
+                                fontSize: 11,
+                                padding: '4px 8px',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: 4,
+                                color: expandedTimelineEventId === ev._id ? '#60a5fa' : 'inherit',
+                              }}
+                              title="View Operational Timeline"
+                            >
+                              <Activity size={12} />
+                              {expandedTimelineEventId === ev._id ? 'Close' : 'Timeline'}
+                            </button>
+                            {ev.status === 'pending_approval' && (
+                              <>
+                                <button
+                                  className="btn btn-sm btn-primary"
+                                  onClick={() => handleApprove(ev._id)}
+                                  disabled={actionId === ev._id}
+                                  style={{ fontSize: 11, padding: '4px 8px' }}
+                                >
+                                  {actionId === ev._id ? 'Approving…' : 'Approve & Dispatch'}
+                                </button>
+                                <button
+                                  className="btn btn-sm btn-secondary"
+                                  onClick={() => handleReject(ev._id)}
+                                  disabled={actionId === ev._id}
+                                  style={{ fontSize: 11, padding: '4px 8px' }}
+                                >
+                                  Reject
+                                </button>
+                              </>
+                            )}
+                            {(ev.status === 'active' || ev.status === 'published') && (
+                              <>
+                                <button
+                                  id={`btn-trigger-${ev._id}`}
+                                  className="btn btn-sm btn-secondary"
+                                  onClick={() => handleTrigger(ev._id)}
+                                  disabled={actionId === ev._id}
+                                  title="Re-trigger alert"
+                                >
+                                  {actionId === ev._id ? <span className="spinner" style={{ width: 12, height: 12 }} /> : <Zap size={12} />}
+                                </button>
+                                <button
+                                  id={`btn-retract-${ev._id}`}
+                                  className="btn btn-sm btn-danger"
+                                  onClick={() => { setRetractModal(ev); setRetractMode('retract'); }}
+                                  disabled={actionId === ev._id}
+                                >
+                                  Retract
+                                </button>
+                                <button
+                                  id={`btn-cancel-${ev._id}`}
+                                  className="btn btn-sm btn-ghost"
+                                  onClick={() => { setRetractModal(ev); setRetractMode('cancel'); }}
+                                  disabled={actionId === ev._id}
+                                >
+                                  Cancel
+                                </button>
+                              </>
+                            )}
                           </div>
-                        )}
-                      </td>
-                      <td className="events-type-cell">{ev.type}</td>
-                      <td><span className={`severity-badge ${ev.severity}`}>{ev.severity}</span></td>
-                      <td className="events-zone-cell">
-                        {ev.zoneType === 'radius' ? `${ev.radiusKm} km radius` : ev.zoneType === 'polygon' ? 'Polygon zone' : 'Zone'}
-                      </td>
-                      <td><span className={`status-badge ${ev.status}`}>{ev.status}</span></td>
-                      <td style={{ fontVariantNumeric: 'tabular-nums' }}>
-                        {ev.alertsSentCount.toLocaleString()}
-                      </td>
-                      <td style={{ color: 'var(--grey-500)', fontSize: 12, whiteSpace: 'nowrap' }}>
-                        {format(new Date(ev.createdAt), 'd MMM yy, HH:mm')}
-                      </td>
-                      <td>
-                        <div className="action-row">
-                          {ev.status === 'pending_approval' && (
-                            <>
-                              <button
-                                className="btn btn-sm btn-primary"
-                                onClick={() => handleApprove(ev._id)}
-                                disabled={actionId === ev._id}
-                                style={{ fontSize: 11, padding: '4px 8px' }}
-                              >
-                                {actionId === ev._id ? 'Approving…' : 'Approve & Dispatch'}
-                              </button>
-                              <button
-                                className="btn btn-sm btn-secondary"
-                                onClick={() => handleReject(ev._id)}
-                                disabled={actionId === ev._id}
-                                style={{ fontSize: 11, padding: '4px 8px' }}
-                              >
-                                Reject
-                              </button>
-                            </>
-                          )}
-                          {(ev.status === 'active' || ev.status === 'published') && (
-                            <>
-                              <button
-                                id={`btn-trigger-${ev._id}`}
-                                className="btn btn-sm btn-secondary"
-                                onClick={() => handleTrigger(ev._id)}
-                                disabled={actionId === ev._id}
-                                title="Re-trigger alert"
-                              >
-                                {actionId === ev._id ? <span className="spinner" style={{ width: 12, height: 12 }} /> : <Zap size={12} />}
-                              </button>
-                              <button
-                                id={`btn-retract-${ev._id}`}
-                                className="btn btn-sm btn-danger"
-                                onClick={() => { setRetractModal(ev); setRetractMode('retract'); }}
-                                disabled={actionId === ev._id}
-                              >
-                                Retract
-                              </button>
-                              <button
-                                id={`btn-cancel-${ev._id}`}
-                                className="btn btn-sm btn-ghost"
-                                onClick={() => { setRetractModal(ev); setRetractMode('cancel'); }}
-                                disabled={actionId === ev._id}
-                              >
-                                Cancel
-                              </button>
-                            </>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
+                        </td>
+                      </tr>
+
+                      {/* Operational Audit Timeline Expansion Row */}
+                      {expandedTimelineEventId === ev._id && (
+                        <tr key={`timeline-${ev._id}`}>
+                          <td colSpan={8} style={{ padding: '0 16px 20px 16px', background: 'rgba(0,0,0,0.15)' }}>
+                            <AuditTimeline eventId={ev._id} />
+                          </td>
+                        </tr>
+                      )}
+                    </React.Fragment>
                   ))}
                 </tbody>
               </table>

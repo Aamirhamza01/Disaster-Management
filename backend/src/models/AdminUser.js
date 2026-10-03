@@ -48,7 +48,7 @@ const adminUserSchema = new mongoose.Schema(
     assignedState: {
       type: String,
       trim: true,
-      default: 'Uttar Pradesh',
+      default: 'Uttarakhand',
     },
     assignedDistricts: [{
       type: String,

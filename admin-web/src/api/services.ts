@@ -2,6 +2,8 @@ import api from './client';
 import type {
   DisasterEvent, AlertLog, SafetyGuide, AdminUser, AlertStats,
   AiAlert, HazardReading, DistrictSummary, CitizenCheckIn, SituationalAwarenessSummary,
+  DistrictRiskScore, IncidentReport, Shelter, EmergencyResource, ResourceSummary,
+  ResponseTask, TaskSummary,
 } from '../types';
 
 // ── Auth ──────────────────────────────────────────────────────────────────────
@@ -77,10 +79,30 @@ export const getDistrictSummaries = (district?: string) =>
     params: { district },
   });
 
+export const getDistrictRiskScores = (district?: string) =>
+  api.get<{ success: boolean; count: number; data: DistrictRiskScore[] }>('/hazard-readings/risk-scores', {
+    params: { district },
+  });
+
 export const getHazardReadings = (params: { district?: string; indicator?: string; days?: number; limit?: number }) =>
   api.get<{ success: boolean; count: number; readings: HazardReading[] }>('/hazard-readings', { params });
 
 // ── Situational Awareness & Citizen Check-Ins ─────────────────────────────────
+export const registerCitizenUser = (data: { name: string; phone: string; preferredLanguage?: string }) =>
+  api.post<{ success: boolean; userId: string; user: any }>('/users/register', data);
+
+export const submitCheckIn = (data: {
+  userId: string;
+  status: 'safe' | 'need_help' | 'family_safe';
+  coordinates: [number, number];
+  district?: string;
+  state?: string;
+  eventId?: string;
+  message?: string;
+  peopleCount?: number;
+}) =>
+  api.post<{ success: boolean; message: string; checkInId: string; status: string }>('/citizens/check-in', data);
+
 export const getSituationalAwareness = (params?: { district?: string; eventId?: string }) =>
   api.get<{
     success: boolean;
@@ -116,4 +138,83 @@ export const getLogStats = () =>
 
 export const getEventLogs = (eventId: string) =>
   api.get<{ success: boolean; stats: object; logs: AlertLog[] }>(`/logs/event/${eventId}`);
+
+// ── Citizen Incident Reports ──────────────────────────────────────────────────
+export const getIncidents = (params?: { status?: string; district?: string; severity?: string; limit?: number }) =>
+  api.get<{ success: boolean; count: number; reports: IncidentReport[] }>('/incidents', { params });
+
+export const getIncident = (id: string) =>
+  api.get<{ success: boolean; report: IncidentReport }>(`/incidents/${id}`);
+
+export const submitIncident = (data: Partial<IncidentReport>) =>
+  api.post<{ success: boolean; message: string; report: IncidentReport }>('/incidents', data);
+
+export const updateIncidentStatus = (id: string, data: { status: string; reviewNotes?: string }) =>
+  api.patch<{ success: boolean; message: string; report: IncidentReport }>(`/incidents/${id}/status`, data);
+
+export const createTaskFromIncident = (id: string, data?: { taskTitle?: string; priority?: string; assignedTo?: string; dueHours?: number }) =>
+  api.post<{ success: boolean; message: string; task: ResponseTask; report: IncidentReport }>(`/incidents/${id}/create-task`, data);
+
+// ── Shelter Management ────────────────────────────────────────────────────────
+export const getShelters = (params?: { district?: string; status?: string; availableOnly?: boolean }) =>
+  api.get<{ success: boolean; count: number; shelters: Shelter[] }>('/shelters', { params });
+
+export const getShelter = (id: string) =>
+  api.get<{ success: boolean; shelter: Shelter }>(`/shelters/${id}`);
+
+export const createShelter = (data: Partial<Shelter>) =>
+  api.post<{ success: boolean; message: string; shelter: Shelter }>('/shelters', data);
+
+export const updateShelter = (id: string, data: Partial<Shelter>) =>
+  api.put<{ success: boolean; message: string; shelter: Shelter }>(`/shelters/${id}`, data);
+
+export const updateShelterOccupancy = (id: string, currentOccupancy: number) =>
+  api.patch<{ success: boolean; message: string; shelter: Shelter; occupancyPercentage: number }>(`/shelters/${id}/occupancy`, { currentOccupancy });
+
+// ── Emergency Resource Management ─────────────────────────────────────────────
+export const getResourceSummary = (district?: string) =>
+  api.get<{ success: boolean; stats: ResourceSummary }>('/resources/summary', { params: { district } });
+
+export const getResources = (params?: { district?: string; resourceType?: string; status?: string }) =>
+  api.get<{ success: boolean; count: number; resources: EmergencyResource[] }>('/resources', { params });
+
+export const createResource = (data: Partial<EmergencyResource>) =>
+  api.post<{ success: boolean; message: string; resource: EmergencyResource }>('/resources', data);
+
+export const allocateResource = (id: string, data: { quantity: number; assignedTo: string }) =>
+  api.post<{ success: boolean; message: string; resource: EmergencyResource }>(`/resources/${id}/allocate`, data);
+
+export const releaseResource = (id: string, data: { quantity: number }) =>
+  api.post<{ success: boolean; message: string; resource: EmergencyResource }>(`/resources/${id}/release`, data);
+
+// ── Response Task Operations ──────────────────────────────────────────────────
+export const getTaskSummary = (district?: string) =>
+  api.get<{ success: boolean; stats: TaskSummary }>('/tasks/summary', { params: { district } });
+
+export const getTasks = (params?: { district?: string; priority?: string; status?: string }) =>
+  api.get<{ success: boolean; count: number; tasks: ResponseTask[] }>('/tasks', { params });
+
+export const getTask = (id: string) =>
+  api.get<{ success: boolean; task: ResponseTask }>(`/tasks/${id}`);
+
+export const createTask = (data: Partial<ResponseTask>) =>
+  api.post<{ success: boolean; message: string; task: ResponseTask }>('/tasks', data);
+
+export const assignTask = (id: string, assignedTo: string) =>
+  api.patch<{ success: boolean; message: string; task: ResponseTask }>(`/tasks/${id}/assign`, { assignedTo });
+
+export const updateTaskStatus = (id: string, status: string) =>
+  api.patch<{ success: boolean; message: string; task: ResponseTask }>(`/tasks/${id}/status`, { status });
+
+export const allocateResourceToTask = (taskId: string, data: { resourceId: string; quantity: number }) =>
+  api.post<{ success: boolean; message: string; task: ResponseTask; resource: EmergencyResource }>(`/tasks/${taskId}/allocate-resource`, data);
+
+// ── Recovery & Audit Timeline ─────────────────────────────────────────────────
+export const getRecoveryRecords = (params?: { district?: string; eventId?: string; status?: string }) =>
+  api.get<{ success: boolean; count: number; records: any[] }>('/recovery', { params });
+
+export const getAuditTimeline = (eventId: string) =>
+  api.get<{ success: boolean; data: any }>(`/audit-timeline/${eventId}`);
+
+
 

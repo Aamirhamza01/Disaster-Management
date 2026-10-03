@@ -57,6 +57,7 @@ beforeAll(async () => {
       isActive: true,
     });
   }
+
   adminId = admin._id;
 
   // Login to get JWT
@@ -86,7 +87,7 @@ afterAll(async () => {
     AdminUser.deleteMany({ email: 'test_sdma@gov.in' }),
     User.deleteMany({ phone: '+919999900001' }),
     DisasterEvent.deleteMany({ title: /\[Test/ }),
-    AiAlert.deleteMany({ state: 'Uttar Pradesh Test' }),
+    AiAlert.deleteMany({ state: 'Uttarakhand Test' }),
     HazardReading.deleteMany({ source: 'TEST_SUITE' }),
     CitizenCheckIn.deleteMany({ citizenName: 'Citizen Test User' }),
   ]);
@@ -101,8 +102,8 @@ describe('1. Hazard Readings API (/api/hazard-readings)', () => {
         readings: [
           {
             timestamp: new Date().toISOString(),
-            state: 'Uttar Pradesh',
-            district: 'Varanasi',
+            state: 'Uttarakhand',
+            district: 'Haridwar',
             stationId: 'TEST_AWS_01',
             indicator: 'rainfall_mm',
             value: 65.5,
@@ -119,11 +120,11 @@ describe('1. Hazard Readings API (/api/hazard-readings)', () => {
   });
 
   it('GET /district-summary - aggregates latest district status', async () => {
-    const res = await request(app).get('/api/hazard-readings/district-summary?district=Varanasi');
+    const res = await request(app).get('/api/hazard-readings/district-summary?district=Haridwar');
     expect(res.status).toBe(200);
     expect(res.body.success).toBe(true);
     expect(Array.isArray(res.body.data)).toBe(true);
-    expect(res.body.data[0].district).toBe('Varanasi');
+    expect(res.body.data[0].district).toBe('Haridwar');
   });
 });
 
@@ -134,10 +135,10 @@ describe('2. Official Warnings API (/api/official-warnings)', () => {
       .send({
         source: 'IMD',
         hazardType: 'HeavyRainfall',
-        state: 'Uttar Pradesh',
-        district: 'Varanasi',
+        state: 'Uttarakhand',
+        district: 'Haridwar',
         severity: 'Warning',
-        headline: '[Test] IMD Warning for Eastern UP',
+        headline: '[Test] IMD Warning for Uttarakhand',
         description: 'Heavy precipitation expected.',
       });
 
@@ -147,7 +148,7 @@ describe('2. Official Warnings API (/api/official-warnings)', () => {
   });
 
   it('GET / - lists active government warnings', async () => {
-    const res = await request(app).get('/api/official-warnings?district=Varanasi');
+    const res = await request(app).get('/api/official-warnings?district=Haridwar');
     expect(res.status).toBe(200);
     expect(res.body.success).toBe(true);
     expect(Array.isArray(res.body.warnings)).toBe(true);
@@ -161,8 +162,8 @@ describe('3. AI Anomaly Alerts API (/api/ai-alerts)', () => {
     const res = await request(app)
       .post('/api/ai-alerts/ingest')
       .send({
-        state: 'Uttar Pradesh Test',
-        district: 'Varanasi',
+        state: 'Uttarakhand Test',
+        district: 'Haridwar',
         hazardType: 'Flood',
         score: 0.88,
         recommendedSeverity: 'Warning',
@@ -206,8 +207,8 @@ describe('4. SDMA Approval Lifecycle (/api/events)', () => {
         title: '[Test Draft] Heavy Storm Warning',
         type: 'HeavyRainfall',
         severity: 'Watch',
-        state: 'Uttar Pradesh',
-        district: 'Gorakhpur',
+        state: 'Uttarakhand',
+        district: 'Dehradun',
         status: 'draft',
         zoneType: 'radius',
         centre: { type: 'Point', coordinates: [83.3732, 26.7606] },
@@ -247,8 +248,8 @@ describe('5. Citizen Response & Situational Awareness (/api/citizens)', () => {
         userId: sampleUser._id,
         status: 'safe',
         coordinates: [82.9739, 25.3176],
-        district: 'Varanasi',
-        state: 'Uttar Pradesh',
+        district: 'Haridwar',
+        state: 'Uttarakhand',
         message: 'On high ground, safe.',
       });
 
@@ -259,7 +260,7 @@ describe('5. Citizen Response & Situational Awareness (/api/citizens)', () => {
 
   it('GET /situational-awareness - summarizes citizen statuses for responders', async () => {
     const res = await request(app)
-      .get('/api/citizens/situational-awareness?district=Varanasi')
+      .get('/api/citizens/situational-awareness?district=Haridwar')
       .set('Authorization', `Bearer ${adminToken}`);
 
     expect(res.status).toBe(200);

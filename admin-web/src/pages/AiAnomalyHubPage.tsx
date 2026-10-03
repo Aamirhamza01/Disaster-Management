@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import { getAiAlerts, promoteAiAlert, dismissAiAlert, getDistrictSummaries } from '../api/services';
 import type { AiAlert, DistrictSummary } from '../types';
+import DataStatusBadge from '../components/DataStatusBadge';
 
 export default function AiAnomalyHubPage() {
   const [alerts, setAlerts] = useState<AiAlert[]>([]);
@@ -85,18 +86,9 @@ export default function AiAnomalyHubPage() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <BrainCircuit size={20} color="var(--blue-600)" />
           <span className="topbar-title">AI Anomaly & Risk Detection Hub</span>
-          <span style={{
-            fontSize: 11,
-            background: 'var(--blue-50)',
-            color: 'var(--blue-700)',
-            padding: '2px 8px',
-            borderRadius: 12,
-            fontWeight: 700,
-            border: '1px solid var(--blue-200)',
-          }}>
-            AUTOMATED PIPELINE
-          </span>
+          <DataStatusBadge status="SIMULATED" size="md" />
         </div>
+
         <button
           className="btn btn-secondary btn-sm"
           onClick={fetchData}
@@ -273,7 +265,7 @@ export default function AiAnomalyHubPage() {
                   >
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12 }}>
                       <div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6, flexWrap: 'wrap' }}>
                           <span style={{
                             background: 'var(--black)',
                             color: 'var(--white)',
@@ -304,21 +296,34 @@ export default function AiAnomalyHubPage() {
                           }}>
                             Rec. Severity: {al.recommendedSeverity}
                           </span>
+                          <DataStatusBadge status="SIMULATED" size="sm" />
+                          <span style={{
+                            fontSize: 10,
+                            fontWeight: 600,
+                            color: 'var(--grey-600)',
+                            textTransform: 'uppercase',
+                            background: 'var(--grey-100)',
+                            padding: '2px 6px',
+                            borderRadius: 4,
+                          }}>
+                            Status: {al.status}
+                          </span>
                         </div>
                         <div style={{ fontSize: 12, color: 'var(--grey-500)' }}>
-                          Detected: {new Date(al.createdAt).toLocaleString()} • Algorithm: Rolling Z-Score & Basin Influx
+                          Detected: {new Date(al.createdAt).toLocaleString()} • Model Pipeline: Anomaly Evaluation & Basin Telemetry
+                          {al.suggestedRadiusKm ? ` • Impact Zone: ${al.suggestedRadiusKm} km radius` : ''}
                         </div>
                       </div>
 
                       {/* Anomaly Score Meter */}
-                      <div style={{ minWidth: 160, textAlign: 'right' }}>
+                      <div style={{ minWidth: 170, textAlign: 'right' }}>
                         <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--grey-600)', marginBottom: 4 }}>
-                          Anomaly Score: <span style={{ fontSize: 14, color: 'var(--red-600)' }}>{al.score.toFixed(2)}</span> / 1.00
+                          AI Score: <span style={{ fontSize: 14, color: 'var(--red-600)' }}>{al.score.toFixed(2)}</span> / 1.00
                         </div>
                         <div style={{ width: '100%', background: 'var(--grey-200)', height: 8, borderRadius: 4, overflow: 'hidden' }}>
                           <div style={{
                             width: `${scorePct}%`,
-                            background: scorePct > 80 ? 'var(--red-600)' : 'var(--amber-500)',
+                            background: scorePct > 80 ? 'var(--red-600)' : scorePct > 50 ? 'var(--amber-500)' : 'var(--blue-600)',
                             height: '100%',
                             transition: 'width 0.3s ease',
                           }} />
@@ -338,36 +343,16 @@ export default function AiAnomalyHubPage() {
                       color: 'var(--grey-800)',
                     }}>
                       <div style={{ fontWeight: 700, fontSize: 11, color: 'var(--blue-700)', marginBottom: 4, textTransform: 'uppercase' }}>
-                        AI Model Explanation & Evidence
+                        Explainable AI Assessment & Evidence
                       </div>
-                      {al.explanation}
+                      <p style={{ margin: 0, fontWeight: 500 }}>{al.explanation}</p>
+                      {al.suggestedCentre && al.suggestedCentre.length === 2 && (
+                        <div style={{ marginTop: 6, fontSize: 11, color: 'var(--grey-600)' }}>
+                          Proposed Epicenter: [{al.suggestedCentre[0].toFixed(4)}°E, {al.suggestedCentre[1].toFixed(4)}°N]
+                        </div>
+                      )}
                     </div>
 
-                    {/* Contributing Features */}
-                    {al.anomalyFeatures && al.anomalyFeatures.length > 0 && (
-                      <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 16 }}>
-                        {al.anomalyFeatures.map((f, i) => (
-                          <div
-                            key={i}
-                            style={{
-                              background: 'var(--white)',
-                              border: '1px solid var(--grey-300)',
-                              borderRadius: 4,
-                              padding: '8px 12px',
-                              fontSize: 11,
-                            }}
-                          >
-                            <span style={{ color: 'var(--grey-600)', textTransform: 'capitalize' }}>
-                              {f.indicator.replace('_', ' ')}:
-                            </span>{' '}
-                            <strong>{f.currentValue} {f.unit}</strong>{' '}
-                            <span style={{ color: 'var(--red-600)', fontWeight: 600 }}>
-                              (+{f.deviationScore.toFixed(1)}σ vs normal {f.baselineMean} {f.unit})
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
 
                     {/* Action Bar */}
                     <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>

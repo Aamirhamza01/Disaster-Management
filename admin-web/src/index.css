@@ -33,7 +33,10 @@
 
 /* ── Reset ──────────────────────────────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html, body, #root { height: 100%; }
+html, body, #root {
+  height: 100%;
+  /* Never clip content globally — only specific scroll containers get overflow control */
+}
 
 body {
   font-family: var(--font);
@@ -42,6 +45,8 @@ body {
   color: var(--black);
   background: var(--grey-100);
   -webkit-font-smoothing: antialiased;
+  /* Prevent unwanted horizontal overflow without hiding legitimate content */
+  overflow-x: clip;
 }
 
 a { color: inherit; text-decoration: none; }
@@ -62,13 +67,20 @@ p  { color: var(--grey-600); }
 .app-shell {
   display: flex;
   height: 100vh;
-  overflow: hidden;
+  width: 100%;
+  max-width: 100%;
+  /* Do NOT use overflow:hidden — it blocks scroll in children */
+  overflow: visible;
 }
 
 /* ── Sidebar ────────────────────────────────────────────────────────────────── */
 .sidebar {
-  width: 300px;
-  min-height: 100vh;
+  width: 280px;
+  height: 100vh;
+  /* Sticky on desktop — stays fixed in viewport */
+  position: sticky;
+  top: 0;
+  align-self: flex-start;
   background: #050607;
   color: #f5f7fa;
   display: flex;
@@ -76,6 +88,7 @@ p  { color: var(--grey-600); }
   flex-shrink: 0;
   border-right: 1px solid rgba(138, 143, 152, 0.18);
   box-shadow: inset -1px 0 0 rgba(138, 143, 152, 0.08);
+  overflow: hidden; /* Clips children but sidebar itself handles scroll internally */
 }
 
 .sidebar-top-accent {
@@ -83,6 +96,7 @@ p  { color: var(--grey-600); }
   width: 100%;
   background: #ff6a00;
   opacity: 0.9;
+  flex-shrink: 0;
 }
 
 .sidebar-brand {
@@ -92,6 +106,7 @@ p  { color: var(--grey-600); }
   padding: 18px 18px 16px;
   border-bottom: 1px solid rgba(138, 143, 152, 0.14);
   background: linear-gradient(180deg, rgba(255, 106, 0, 0.04), rgba(255, 106, 0, 0));
+  flex-shrink: 0;
 }
 
 .sidebar-logo-mark {
@@ -107,6 +122,7 @@ p  { color: var(--grey-600); }
   flex-direction: column;
   justify-content: center;
   min-width: 0;
+  flex: 1;
 }
 
 .sidebar-logo-text {
@@ -115,6 +131,9 @@ p  { color: var(--grey-600); }
   font-weight: 700;
   letter-spacing: -0.02em;
   color: #f8fafc;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .sidebar-logo-sub {
@@ -126,9 +145,26 @@ p  { color: var(--grey-600); }
   color: #8a8f98;
 }
 
+/* Nav area: flex:1 + overflow-y:auto so it scrolls when many items */
 .sidebar-nav {
   flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
   padding: 18px 12px 12px;
+  /* Custom thin scrollbar */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(148, 163, 184, 0.2) transparent;
+}
+
+.sidebar-nav::-webkit-scrollbar {
+  width: 4px;
+}
+.sidebar-nav::-webkit-scrollbar-track {
+  background: transparent;
+}
+.sidebar-nav::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.2);
+  border-radius: 4px;
 }
 
 .sidebar-section {
@@ -205,12 +241,14 @@ p  { color: var(--grey-600); }
   outline-offset: 2px;
 }
 
+/* Footer / Sign Out: always pinned at bottom of sidebar, never scrolls away */
 .sidebar-footer {
   display: flex;
   flex-direction: column;
-  padding: 18px 18px 18px;
+  padding: 18px;
   border-top: 1px solid rgba(138, 143, 152, 0.14);
-  margin-top: auto;
+  /* Do NOT use margin-top: auto — sidebar-nav: flex:1 handles the push */
+  flex-shrink: 0;
   gap: 12px;
 }
 
@@ -265,9 +303,14 @@ p  { color: var(--grey-600); }
 /* ── Main Content ───────────────────────────────────────────────────────────── */
 .main-content {
   flex: 1;
+  /* CRITICAL: min-width:0 prevents flex child from overflowing its parent */
+  min-width: 0;
+  width: 0; /* Forces flex to properly calculate available space */
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  /* THIS is the primary scroll container for page content */
+  overflow-y: auto;
+  overflow-x: hidden;
   background: var(--grey-100);
 }
 
@@ -280,14 +323,20 @@ p  { color: var(--grey-600); }
   background: var(--white);
   border-bottom: var(--border);
   flex-shrink: 0;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-width: 0;
 }
 
-.topbar-title { font-size: 15px; font-weight: 600; }
+.topbar-title { font-size: 15px; font-weight: 600; overflow-wrap: anywhere; }
 
 .page-content {
   flex: 1;
-  overflow-y: auto;
   padding: 24px 28px;
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 /* ── Cards ──────────────────────────────────────────────────────────────────── */
@@ -311,9 +360,11 @@ p  { color: var(--grey-600); }
 /* ── Stats Grid ─────────────────────────────────────────────────────────────── */
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   gap: 16px;
   margin-bottom: 24px;
+  min-width: 0;
+  width: 100%;
 }
 
 .stat-card {
@@ -321,14 +372,16 @@ p  { color: var(--grey-600); }
   border: var(--border);
   border-radius: var(--radius);
   padding: 18px 20px;
+  min-width: 0;
+  overflow: hidden;
 }
 
-.stat-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.6px; color: var(--grey-500); margin-bottom: 6px; }
+.stat-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.6px; color: var(--grey-500); margin-bottom: 6px; overflow-wrap: anywhere; }
 .stat-value { font-size: 28px; font-weight: 700; line-height: 1; color: var(--black); }
-.stat-sub   { font-size: 12px; color: var(--grey-400); margin-top: 4px; }
+.stat-sub   { font-size: 12px; color: var(--grey-400); margin-top: 4px; overflow-wrap: anywhere; }
 
 .logs-kpis {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   margin-bottom: 20px;
 }
 
@@ -682,7 +735,13 @@ tbody tr:hover {
 .form-row .form-group { margin-bottom: 0; }
 
 /* ── Table ──────────────────────────────────────────────────────────────────── */
-.table-wrap { overflow-x: auto; }
+/* Tables MUST be wrapped — only the wrapper scrolls horizontally, not the page */
+.table-wrap {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
 
 table {
   width: 100%;
@@ -753,6 +812,11 @@ tbody td {
   flex-direction: column;
   min-height: 100%;
   background: #f5f7fa;
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow-x: hidden;
 }
 
 .topbar {
@@ -2644,3 +2708,345 @@ tbody td {
 /* Leaflet draw overrides to match B&W theme */
 .leaflet-draw-toolbar a { background-color: var(--white) !important; border-color: var(--grey-300) !important; color: var(--black) !important; }
 .leaflet-draw-toolbar a:hover { background-color: var(--grey-100) !important; }
+
+.command-center-grid {
+  display: grid;
+  grid-template-columns: 1fr 380px;
+  gap: 24px;
+}
+
+@media (max-width: 1100px) {
+  .command-center-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   CITIZEN PUBLIC PORTAL STYLING
+───────────────────────────────────────────────────────────────────────────── */
+
+.citizen-nav-link {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  color: #94a3b8;
+  font-size: 0.825rem;
+  font-weight: 500;
+  text-decoration: none;
+  transition: all 0.15s ease;
+}
+
+.citizen-nav-link:hover {
+  color: #f8fafc;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.citizen-nav-link.active {
+  color: #38bdf8;
+  background: rgba(56, 189, 248, 0.12);
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  font-weight: 600;
+}
+
+.citizen-mobile-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 6px;
+  color: #cbd5e1;
+  font-size: 0.9rem;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.citizen-mobile-link.active {
+  color: #38bdf8;
+  background: rgba(56, 189, 248, 0.15);
+  font-weight: 700;
+}
+
+.citizen-mobile-menu-btn {
+  display: none;
+}
+
+@media (max-width: 960px) {
+  .citizen-desktop-nav {
+    display: none !important;
+  }
+  .citizen-mobile-menu-btn {
+    display: block !important;
+  }
+}
+
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   GLOBAL RESPONSIVE SYSTEM — Full rewrite for correct scroll architecture
+   Breakpoints:
+     Desktop:  >= 1024px  — sidebar fixed, main scrolls
+     Tablet:   640–1023px — sidebar as drawer, stacked layout
+     Mobile:   < 640px    — full-width single column
+───────────────────────────────────────────────────────────────────────────── */
+
+/* ── Mobile Header Bar (hidden on desktop) ──────────────────────────────────── */
+.mobile-header-bar {
+  display: none;
+  align-items: center;
+  padding: 12px 16px;
+  background: #050607;
+  border-bottom: 1px solid rgba(138, 143, 152, 0.18);
+  color: #f8fafc;
+  flex-shrink: 0;
+  z-index: 100;
+  gap: 12px;
+}
+
+.mobile-hamburger-btn {
+  background: transparent;
+  border: none;
+  color: #f8fafc;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  padding: 4px;
+  flex-shrink: 0;
+}
+
+.mobile-header-title {
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: #f8fafc;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  min-width: 0;
+}
+
+.sidebar-close-mobile-btn {
+  display: none;
+  background: none;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 4px;
+  flex-shrink: 0;
+}
+
+/* ── Sidebar Overlay/Backdrop (hidden on desktop) ───────────────────────────── */
+.sidebar-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(4px);
+  z-index: 999;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+}
+
+/* ── Global inline-style grid overrides for small screens ───────────────────── */
+/* Override DashboardPage and other pages that use inline maxWidth */
+@media (max-width: 1023px) {
+  /* Inline style override: any direct children using max-width that could overflow */
+  .main-content > * {
+    max-width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+  }
+}
+
+/* ── TABLET + MOBILE: < 1024px ──────────────────────────────────────────────── */
+@media (max-width: 1023px) {
+  /* App shell becomes vertical column with scrolling main area */
+  .app-shell {
+    flex-direction: column;
+    height: 100vh;
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* Show mobile header bar */
+  .mobile-header-bar {
+    display: flex;
+  }
+
+  /* Sidebar becomes off-canvas drawer */
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: -320px;
+    bottom: 0;
+    height: 100dvh;
+    width: 280px;
+    z-index: 1000;
+    transition: left 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.5);
+    /* sidebar must scroll independently on mobile too */
+    overflow-y: auto;
+    overflow-x: hidden;
+    /* Important: reset sticky positioning used on desktop */
+    position: fixed;
+    align-self: auto;
+  }
+
+  .sidebar.mobile-open {
+    left: 0;
+  }
+
+  /* Show backdrop and close button when drawer is active */
+  .sidebar-backdrop {
+    display: block;
+  }
+
+  .sidebar-backdrop.active {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .sidebar-close-mobile-btn {
+    display: block;
+    margin-left: auto;
+  }
+
+  /* Main content: takes full height below mobile header bar */
+  .main-content {
+    flex: 1;
+    width: 100%;
+    min-width: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+
+  /* Topbar adjustments for tablet */
+  .topbar {
+    padding: 12px 16px;
+    height: auto;
+    flex-wrap: wrap;
+    gap: 10px;
+    min-height: 48px;
+  }
+
+  /* Page content padding for tablet */
+  .page-content {
+    padding: 16px 16px 32px;
+  }
+
+  /* All flex containers inside main content must wrap */
+  .main-content .topbar-actions {
+    flex-wrap: wrap;
+  }
+}
+
+/* ── MOBILE ONLY: < 640px ───────────────────────────────────────────────────── */
+@media (max-width: 640px) {
+  .topbar {
+    padding: 10px 12px;
+    gap: 8px;
+  }
+
+  .topbar-title {
+    font-size: 13px;
+  }
+
+  .page-content {
+    padding: 12px 10px 28px;
+  }
+
+  .card {
+    padding: 14px;
+    border-radius: 12px;
+  }
+
+  /* Force single-column stats on mobile */
+  .stats-grid {
+    grid-template-columns: 1fr !important;
+    gap: 10px;
+  }
+
+  /* Force single-column forms on mobile */
+  .form-row {
+    grid-template-columns: 1fr !important;
+    gap: 12px;
+  }
+
+  /* Modals: nearly full-screen on mobile */
+  .modal-overlay {
+    padding: 8px;
+    align-items: flex-end;
+  }
+
+  .modal {
+    width: 100% !important;
+    max-width: 100% !important;
+    max-height: 92vh;
+    border-radius: 16px 16px 0 0;
+  }
+
+  /* Tables: horizontal scroll container only, page itself does NOT scroll */
+  .table-wrap {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Buttons and action rows: wrap on mobile */
+  .btn-group,
+  .topbar-actions,
+  .action-row {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  /* Inline grid overrides for dashboard sections */
+  div[style*="gridTemplateColumns: 1fr 380px"],
+  div[style*="grid-template-columns: 1fr 380px"] {
+    grid-template-columns: 1fr !important;
+  }
+
+  div[style*="gridTemplateColumns: repeat(auto-fit, minmax(220px"],
+  div[style*="gridTemplateColumns: repeat(auto-fit, minmax(200px"],
+  div[style*="gridTemplateColumns: repeat(auto-fit, minmax(180px"] {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* ── INLINE STYLE GUARD: Dashboard page content max-width ─────────────────── */
+/* Override the inline maxWidth: 1600px on DashboardPage's root div
+   so it never expands wider than available main-content width */
+.main-content > div {
+  max-width: 100% !important;
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Specific override for DashboardPage inline padding wrapper */
+.main-content > div[style] {
+  padding-left: min(24px, 4vw) !important;
+  padding-right: min(24px, 4vw) !important;
+}
+
+@media (max-width: 640px) {
+  .main-content > div[style] {
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+  }
+}
+
+/* ── Ensure all flex/grid children inside main content don't overflow ─────── */
+.main-content * {
+  min-width: 0;
+}
+
+/* Exception: don't override explicit widths on maps and canvases */
+.main-content canvas,
+.main-content .map-container {
+  min-width: initial;
+}
+

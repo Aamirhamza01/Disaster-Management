@@ -29,9 +29,5 @@ Write-Host "`nAll 3 core services launched in their own dedicated windows!" -For
 Write-Host "-------------------------------------------------------------------" -ForegroundColor Gray
 Write-Host "• Express Backend:   http://localhost:5000" -ForegroundColor Gray
 Write-Host "• AI Microservice:   http://localhost:8000" -ForegroundColor Gray
-Write-Host "• Admin Operations:  http://localhost:5173" -ForegroundColor Gray
-Write-Host "• CAP XML Feed:      http://localhost:5000/api/feeds/cap.xml" -ForegroundColor Gray
-Write-Host "• CAP Browser Alert: http://localhost:5173/browser-alerts.html" -ForegroundColor Gray
+Write-Host "• Citizen Web Portal: http://localhost:5173/citizen" -ForegroundColor Gray
 Write-Host "-------------------------------------------------------------------" -ForegroundColor Gray
-Write-Host "`nTo run the Citizen Flutter Mobile App on an emulator or USB device:" -ForegroundColor Magenta
-Write-Host "  cd disaster_app; flutter run`n" -ForegroundColor White

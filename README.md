@@ -1,47 +1,44 @@
-# 🇮🇳 India Disaster Management & AI Early Warning System
+# AI Disaster Intelligence & Community Response System
 
-An intelligent, cloud-native disaster early-warning and situational awareness platform engineered for Indian hazard management (IMD, CWC, NDMA/SACHET standards).
-
-The platform continuously ingests environmental telemetry, applies unsupervised time-series anomaly detection to identify emerging threats (heavy rainfall, flash floods, heatwaves, river gauge danger marks), guides human researchers and State Disaster Management Authority (SDMA) operators through a verifiable approval workflow, and rapidly disseminates alerts across mobile apps (FCM), browser push feeds, and OASIS CAP 1.2 compliant feeds.
+An end-to-end, AI-powered early warning and disaster response orchestration platform built to empower State Disaster Management Authorities (SDMA), emergency response operators, and citizens during natural hazards (floods, earthquakes, cyclones, heatwaves, and landslides).
 
 ---
 
-## 🏛️ System Architecture
+##  Architecture & Component Overview
 
 ```mermaid
-flowchart TB
-    subgraph DataIngestion ["1. Data Ingestion Layer"]
-        IMD["IMD API & RSS<br/>(District Rainfall & Heatwave)"]
-        CWC["CWC River Gauges<br/>(Water Levels & Danger Marks)"]
-        SACHET["NDMA / SACHET<br/>(Official CAP Warnings)"]
-        Researchers["Field Researcher Notes<br/>(Ground Observations)"]
+graph TD
+    subgraph Ingestion ["1. Multi-Source Ingestion Engine"]
+        IMD["IMD Weather & Satellite Radar API"]
+        CWC["CWC River Water Level Gauge Stream"]
+        SACHET["NDMA SACHET CAP Alerts Feed"]
     end
 
-    subgraph AIService ["2. AI Anomaly Detection Service (Python/FastAPI)"]
-        IngestEngine["Telemetry Normalizer & Buffer"]
-        AnomalyDetector["Time-Series Anomaly Detector<br/>(Rolling Z-Score & Isolation Forest)"]
-        ExplainEngine["Explainability Generator<br/>(Feature Deviations & Baselines)"]
-        RiskFusion["Risk Engine<br/>(Fused Rules: IMD Warning + Anomaly Score)"]
+    subgraph AIService ["2. AI Anomaly Engine (FastAPI)"]
+        IngestEngine["Ingestion & Normalization Engine"]
+        AnomalyDetector["Time-Series Anomaly Detection Algorithm"]
+        RiskFusion["Hazard Risk Fusion & Rule Engine"]
     end
 
-    subgraph BackendCore ["3. Cloud Backend API (Node.js/Express & MongoDB)"]
-        AuthRBAC["Auth & RBAC<br/>(Admin, Researcher, SDMA Operator)"]
-        EventPipeline["Disaster Event Pipeline<br/>(Draft ➔ Pending Approval ➔ Published)"]
-        HazardDB["Hazard Readings & AI Alerts Store"]
-        CAPFeedGen["OASIS CAP 1.2 Feed Generator<br/>(XML & JSON)"]
-        AlertDispatcher["Geospatial Alert Dispatcher<br/>(Turf.js Point-in-Polygon)"]
+    subgraph BackendCore ["3. Core Orchestrator Backend (Node.js/Express)"]
+        MongoDB[("MongoDB Database")]
+        GeoEngine["Turf.js Geofencing & Spatial Buffer"]
+        AlertRouter["Alert Routing & Retraction Engine"]
     end
 
-    subgraph PresentationWeb ["4. SDMA & Researcher Console (React/Vite)"]
+    subgraph PresentationWeb ["4. SDMA & Operator Console (React/Vite)"]
         AIHub["AI Anomaly Hub & Telemetry Charts"]
         ApprovalQueue["SDMA Approval & Dissemination Queue"]
         EventEditor["Bilingual Alert Editor (EN/HI) & District Selector"]
         CitizenDashboard["Situational Awareness Dashboard"]
+        SimulationLab["Disaster Simulation Lab"]
+        ImpactIntel["Impact Intelligence & Estimation"]
+        RecoveryTrack["Recovery Tracking"]
+        CommandCenter["Emergency Command Center"]
     end
 
-    subgraph CitizenDelivery ["5. Citizen Apps & Multi-Channel Dissemination"]
-        FlutterApp["Citizen Mobile App (Flutter)<br/>• District Subscription & GPS<br/>• Offline Safety Guides<br/>• 'I am Safe' / 'Need Help' Check-In"]
-        FCM["Firebase Cloud Messaging (FCM)<br/>Emergency Siren Push"]
+    subgraph CitizenDelivery ["5. Public Citizen Web Portal & Feeds"]
+        CitizenWeb["Public Citizen Portal (React/Vite)<br/>• District Hazard Risk & GPS Location<br/>• 1-Tap Safety Check-In ('I'm Safe' / 'Need Help')<br/>• Field Incident Reporting<br/>• Emergency Shelters & Safety Guides"]
         CAPEndpoints["NDMA SACHET / CAP 1.2 Feeds<br/>(/api/feeds/cap.xml)"]
         BrowserAlerts["Web Browser Push Notifications"]
     end
@@ -57,12 +54,12 @@ flowchart TB
 ## 📦 Project Structure
 
 ```
-Building-Disaster-Management-System/
+Disaster-Management/
 ├── backend/                  # Node.js + Express + Mongoose API
 │   ├── src/
 │   │   ├── models/           # Mongoose schemas (DisasterEvent, HazardReading, AiAlert, CitizenCheckIn, ...)
 │   │   ├── routes/           # REST endpoints (events, aiAlerts, hazardReadings, citizens, capFeeds, ...)
-│   │   ├── services/         # alertService (Turf.js geo-containment, FCM push, retractions)
+│   │   ├── services/         # alertService (Turf.js geo-containment, retractions)
 │   │   ├── middleware/       # JWT auth, role validation, rate limiters
 │   │   └── server.js         # Entry point
 │   ├── Dockerfile            # Container configuration
@@ -75,19 +72,14 @@ Building-Disaster-Management-System/
 │   ├── main.py               # FastAPI server and background scheduler
 │   └── requirements.txt
 │
-├── admin-web/                # React 19 + TypeScript + Vite Admin Console
+├── admin-web/                # React 19 + TypeScript + Vite Web Application
 │   ├── src/
-│   │   ├── pages/            # AI Hub, Situational Awareness, Event Approval, New Event, Guides
-│   │   ├── components/       # Leaflet interactive map, Layout, Charts
+│   │   ├── pages/            # Operator Console (AI Hub, Command Center, Simulation, Recovery)
+│   │   │   └── citizen/      # Public Citizen Web Portal (/citizen)
+│   │   ├── components/       # Layouts, Citizen Layout, Maps, Charts
 │   │   └── api/              # Typed Axios API client
 │   └── public/
 │       └── browser-alerts.html # Live CAP browser notification subscriber
-│
-├── disaster_app/             # Flutter 3.x Cross-Platform Citizen App
-│   ├── lib/
-│   │   ├── core/             # API client, offline SQLite/SharedPreferences cache, audio buzzer
-│   │   └── features/         # Alert dashboard, 1-tap "I'm Safe", Offline Guides, Map, Settings
-│   └── pubspec.yaml
 │
 └── docker-compose.yml        # Multi-service local & cloud orchestration
 ```
@@ -104,12 +96,12 @@ The system adheres to Indian Disaster Management Authority standards:
 - **Industrial / Technological**: Chemical Spill, Fire, Gas Leakage.
 
 ### Severity Matrix
-| Severity | NDMA Color | Criteria | Action & Sound |
+| Severity | NDMA Color | Criteria | Action |
 | :--- | :--- | :--- | :--- |
-| **Advisory** | 🟡 Yellow | Early warning, monitor updates | Standard push, silent notice |
+| **Advisory** | 🟡 Yellow | Early warning, monitor updates | Standard bulletin notice |
 | **Watch** | 🟠 Orange | Significant risk expected, prepare | High priority notification |
-| **Warning** | 🔴 Red | High danger to life/property | Severe vibration + alert chime |
-| **Emergency** | 🟣 Dark Red | Imminent catastrophe / evacuation | Full-screen modal + continuous siren buzzer |
+| **Warning** | 🔴 Red | High danger to life/property | Urgent citizen alert chime |
+| **Emergency** | 🟣 Dark Red | Imminent catastrophe / evacuation | Full alert modal + continuous siren |
 
 ---
 
@@ -123,10 +115,9 @@ The system adheres to Indian Disaster Management Authority standards:
    - Upon clicking **Approve & Dispatch**, status updates to `published`.
 3. **Instant Dissemination**:
    - Turf.js computes points-in-polygon for registered citizens in the targeted district/coordinates.
-   - Multicast FCM pushes siren alerts to devices.
    - OASIS CAP 1.2 XML/JSON feeds are updated dynamically at `/api/feeds/cap.xml`.
 4. **Citizen Situational Awareness**:
-   - Citizens tap **"I am Safe"** or **"Need Help"**.
+   - Citizens visit `/citizen/check-in` and tap **"I am Safe"** or **"Need Help"**.
    - Responses stream into the **Situational Awareness Dashboard** for disaster response team coordination.
 
 ---
@@ -136,7 +127,7 @@ The system adheres to Indian Disaster Management Authority standards:
 You can run the entire stack at once using any of the following methods:
 
 ### Option A: Unified Terminal (Single Command)
-Run from the root directory to launch the Backend, AI Engine, and Admin Console simultaneously in one terminal:
+Run from the root directory to launch the Backend, AI Engine, and Web Application simultaneously:
 ```bash
 npm start
 ```
@@ -153,19 +144,12 @@ Spawns each service in its own dedicated, labeled terminal window so you can vie
   start-all.bat
   ```
 
-### Option C: Docker Compose (Full Container Stack)
-```bash
-docker-compose up --build
-```
 
 ---
 
-### Running the Citizen Mobile App (Flutter)
-Launch in a new terminal once an Android Emulator, iOS Simulator, or physical device is connected:
-```bash
-cd disaster_app
-flutter run
-```
+### Accessing the Web Portals
+- **Public Citizen Safety Portal**: `http://localhost:5173/citizen`
+- **Operator Emergency Command Center**: `http://localhost:5173/dashboard`
 
 ---
 
@@ -174,8 +158,7 @@ flutter run
 | :--- | :--- | :--- | :--- |
 | **Cloud Backend API** | `cd backend` | `npm run dev` | `http://localhost:5000` |
 | **AI Anomaly Microservice** | `cd ai-service` | `python main.py` | `http://localhost:8000` |
-| **SDMA Admin Web Portal** | `cd admin-web` | `npm run dev` | `http://localhost:5173` |
-| **Citizen Flutter App** | `cd disaster_app` | `flutter run` | Mobile / Web / Desktop |
+| **Web Application (Citizen & Admin)** | `cd admin-web` | `npm run dev` | `http://localhost:5173` |
 
 
 ---

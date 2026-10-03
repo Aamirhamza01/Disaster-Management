@@ -112,13 +112,13 @@ const disasterEventSchema = new mongoose.Schema(
     state: {
       type: String,
       trim: true,
-      default: 'Uttar Pradesh',
+      default: 'Uttarakhand',
     },
 
     district: {
       type: String,
       trim: true,
-      default: 'Varanasi',
+      default: 'Haridwar',
     },
 
     // ── Multi-language Content (Hindi & Regional) ─────────────────────────────

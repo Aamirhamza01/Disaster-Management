@@ -60,7 +60,7 @@ const citizenCheckInSchema = new mongoose.Schema(
     state: {
       type: String,
       trim: true,
-      default: 'Uttar Pradesh',
+      default: 'Uttarakhand',
     },
 
     eventId: {

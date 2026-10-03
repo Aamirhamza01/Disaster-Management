@@ -152,4 +152,25 @@ router.get('/district-summary', async (req, res, next) => {
   }
 });
 
+// ─────────────────────────────────────────────────────────────────────────────
+// GET /api/hazard-readings/risk-scores — 0-100 District Disaster Risk Score
+// Aggregates active events, AI alert proposals, and sensor anomalies
+// ─────────────────────────────────────────────────────────────────────────────
+const { calculateDistrictRiskScores } = require('../services/districtRiskService');
+
+router.get('/risk-scores', async (req, res, next) => {
+  try {
+    const district = req.query.district;
+    const scores = await calculateDistrictRiskScores(district);
+    res.json({
+      success: true,
+      count: scores.length,
+      data: scores,
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
 module.exports = router;
+

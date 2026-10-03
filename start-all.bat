@@ -22,11 +22,7 @@ echo ===================================================================
 echo All 3 core services launched in their own dedicated windows!
 echo - Express Backend:   http://localhost:5000
 echo - AI Microservice:   http://localhost:8000
-echo - Admin Operations:  http://localhost:5173
-echo - OASIS CAP Feed:    http://localhost:5000/api/feeds/cap.xml
+echo - Citizen Web Portal: http://localhost:5173/citizen
 echo ===================================================================
-echo.
-echo To run the Citizen Mobile App, launch in a separate terminal:
-echo cd disaster_app ^&^& flutter run
 echo.
 pause

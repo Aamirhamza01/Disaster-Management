@@ -77,7 +77,7 @@ router.post(
         admin.loginAttempts += 1;
         // Lock after 5 failed attempts for 30 minutes
         if (admin.loginAttempts >= 5) {
-          admin.lockedUntil = new Date(Date.now() + 30 * 60 * 1000);
+          admin.lockedUntil = new Date(Date.now() + 3 * 6 * 10);
           admin.loginAttempts = 0;
         }
         await admin.save();
