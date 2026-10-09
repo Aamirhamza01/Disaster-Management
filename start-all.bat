@@ -10,7 +10,7 @@ start "Disaster Backend API (:5000)" cmd /k "cd backend && npm run dev"
 timeout /t 2 /nobreak >nul
 
 echo [2/3] Starting AI Anomaly Detection Microservice on Port 8000...
-start "AI Anomaly Microservice (:8000)" cmd /k "cd ai-service && python main.py"
+start "AI Anomaly Microservice (:8000)" cmd /k "cd ai-service && (if exist venv\Scripts\python.exe (venv\Scripts\python.exe main.py) else (python main.py))"
 
 timeout /t 2 /nobreak >nul
 

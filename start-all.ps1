@@ -17,7 +17,7 @@ Start-Sleep -Seconds 2
 
 # 2. AI Anomaly Detection Microservice (Python/FastAPI) -> Port 8000
 Write-Host "[2/3] Launching FastAPI AI Anomaly Microservice (Port 8000)..." -ForegroundColor Yellow
-Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd '$rootDir\ai-service'; Write-Host '--- AI ANOMALY MICROSERVICE (:8000) ---' -ForegroundColor Yellow; python main.py"
+Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd '$rootDir\ai-service'; Write-Host '--- AI ANOMALY MICROSERVICE (:8000) ---' -ForegroundColor Yellow; if (Test-Path 'venv\Scripts\python.exe') { .\venv\Scripts\python.exe main.py } else { python main.py }"
 
 Start-Sleep -Seconds 2
 
